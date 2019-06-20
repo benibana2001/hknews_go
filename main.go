@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,6 +22,14 @@ type Article struct {
 }
 
 func main() {
+	server := http.Server{
+		Addr: "localhost:8089",
+	}
+	http.HandleFunc("/", process)
+	server.ListenAndServe()
+}
+
+func process(w http.ResponseWriter, r *http.Request) {
 	// 1. CREATE CLIENT
 	//url := "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
 	url := "https://hacker-news.firebaseio.com/v0/item/8863.json?print=pretty"
@@ -53,6 +62,12 @@ func main() {
 		log.Fatal(err2)
 	}
 
+	// MAKE TEMPLATE
 	fmt.Printf("%+v", article)
 	//
+	t, err := template.ParseFiles("tmpl.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	t.Execute(w, article)
 }
