@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -21,6 +20,8 @@ type Article struct {
 	Type        string `json:"type"`
 	Url         string `json:"url"`
 }
+type Ids []int // Article に Cards を格納する際の中間スライス
+type Cards []Article
 
 func main() {
 	server := http.Server{
@@ -33,7 +34,6 @@ func main() {
 func process(w http.ResponseWriter, r *http.Request) {
 	// 1. CREATE CLIENT
 	urlTopStories := "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
-	//urlItem := "https://hacker-news.firebaseio.com/v0/item/8863.json?print=pretty"
 	urlItemBase := "https://hacker-news.firebaseio.com/v0/item/"
 	client := &http.Client{}
 
@@ -52,51 +52,56 @@ func process(w http.ResponseWriter, r *http.Request) {
 	defer dataTopStories.Body.Close()
 
 	// 4a. READ BODY (which is io.Reader)
-	bodyTopStories, err := ioutil.ReadAll(dataTopStories.Body)
+	bodyTopStories, err := ioutil.ReadAll(dataTopStories.Body) // bodyTopStories is `[]bytes`
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(bodyTopStories)
 
-	var ids []int
+	var ids Ids
 	json.Unmarshal(bodyTopStories, &ids)
-	fmt.Printf("%+v", ids)
+	ids = ids[0:9]
 
-	// 2b. CREATE REQUEST
-	//reqItem, err := http.NewRequest("GET", urlItem, nil)
-	id := strconv.Itoa(ids[0])
-	reqItem, err := http.NewRequest("GET", urlItemBase+id+".json", nil)
-	if err != nil {
-		log.Fatal(err)
+	// 2c. CREATE REQUEST , 3c. FETCH , 4c. READ BODY (which is io.Reader), 5c. JSON UNMARSHAL
+	cards := Cards{}
+
+	for _, id := range ids {
+		reqItem, err := http.NewRequest("GET", urlItemBase+strconv.Itoa(id)+".json", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		dataItem, err := client.Do(reqItem)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		storeArticle(dataItem, &cards) // cards に個々の記事を格納する
 	}
 
-	// 3b. FETCH
-	dataItem, err := client.Do(reqItem)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer dataItem.Body.Close()
-
-	// 4b. READ BODY (which is io.Reader)
-	bodyItem, err := ioutil.ReadAll(dataItem.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// 5b. JSON UNMARSHAL
-	article := new(Article)
-	err2 := json.Unmarshal(bodyItem, article)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-
-	// MAKE TEMPLATE
-	fmt.Printf("%+v", article)
-	//
+	// 6. MAKE TEMPLATE
 	t, err := template.ParseFiles("tmpl.html")
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.Execute(w, article)
+	t.Execute(w, cards)
+}
+
+func storeArticle(item *http.Response, cards *Cards) {
+	defer item.Body.Close()
+
+	bodyItem, err := ioutil.ReadAll(item.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err1 := item.Body.Close()
+	if err1 != nil {
+		log.Fatal(err)
+	}
+
+	article := new(Article)
+	err2 := json.Unmarshal(bodyItem, article)
+	if err != nil {
+		log.Fatal(err2)
+	}
+	*cards = append(*cards, *article)
 }
