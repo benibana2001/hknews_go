@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -61,18 +60,6 @@ func process(w http.ResponseWriter, r *http.Request) {
 	var ids Ids
 	json.Unmarshal(bodyTopStories, &ids)
 	ids = ids[0:9]
-	fmt.Printf("%+v\n", ids)
-
-	// 2b. CREATE REQUEST
-	//reqItem, err := http.NewRequest("GET", urlItem, nil)
-	id := strconv.Itoa(ids[0])
-	reqItem, err := http.NewRequest("GET", urlItemBase+id+".json", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//////////
-	//////////
 
 	// 2c. CREATE REQUEST , 3c. FETCH , 4c. READ BODY (which is io.Reader), 5c. JSON UNMARSHAL
 	cards := Cards{}
@@ -88,63 +75,33 @@ func process(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		// TODO: SHOULD NOT CALL DEFER IN LOOP, REF: https://blog.golang.org/defer-panic-and-recover
-		//  => 無名関数でラップする
-		//defer dataItem.Body.Close()
-
-		bodyItem, err := ioutil.ReadAll(dataItem.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// TODO: DEFER
-		err1 := dataItem.Body.Close()
-		if err1 != nil {
-			log.Fatal(err)
-		}
-
-		article := new(Article)
-		err2 := json.Unmarshal(bodyItem, article)
-		if err != nil {
-			log.Fatal(err2)
-		}
-
-		cards = append(cards, *article)
-	}
-	fmt.Printf("%+v\n", cards)
-	//////////
-	//////////
-
-	//////////
-	//////////
-	// 3b. FETCH
-	dataItem, err := client.Do(reqItem)
-	if err != nil {
-		log.Fatal(err)
+		storeArticle(dataItem, &cards) // cards に個々の記事を格納する
 	}
 
-	defer dataItem.Body.Close()
-
-	// 4b. READ BODY (which is io.Reader)
-	bodyItem, err := ioutil.ReadAll(dataItem.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// 5b. JSON UNMARSHAL
-	article := new(Article)
-	err2 := json.Unmarshal(bodyItem, article)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	//////////
-	//////////
-
-	// MAKE TEMPLATE
-	fmt.Printf("%+v\n", article)
-	//
+	// 6. MAKE TEMPLATE
 	t, err := template.ParseFiles("tmpl.html")
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.Execute(w, article)
+	t.Execute(w, cards)
+}
+
+func storeArticle(item *http.Response, cards *Cards) {
+	defer item.Body.Close()
+
+	bodyItem, err := ioutil.ReadAll(item.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err1 := item.Body.Close()
+	if err1 != nil {
+		log.Fatal(err)
+	}
+
+	article := new(Article)
+	err2 := json.Unmarshal(bodyItem, article)
+	if err != nil {
+		log.Fatal(err2)
+	}
+	*cards = append(*cards, *article)
 }
