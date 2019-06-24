@@ -1,0 +1,1 @@
+web: ./hknews_go

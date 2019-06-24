@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -24,8 +25,14 @@ type Ids []int // Article に Cards を格納する際の中間スライス
 type Cards []Article
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
 	server := http.Server{
-		Addr: "localhost:8089",
+		Addr: ":" + port,
 	}
 	http.HandleFunc("/", process)
 	server.ListenAndServe()
