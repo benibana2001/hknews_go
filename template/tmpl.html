@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>hknews</title>
+    <base target="_blank">
+    <style>
+        body{
+            background: #000;
+        }
+        .card{
+            background: gray;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="cards">
+        {{ range . }}
+        <div class="card">
+            <div class="title">
+                <a href="{{ .Url }}">{{ .Title }}</a>
+            </div>
+            <div class="socre">SCORE: {{ .Score }}</div>
+            <div class="comment">COMMENT: {{ .Descendants }}</div>
+        </div>
+        {{ end }}
+    </div>
+</body>
+</html>

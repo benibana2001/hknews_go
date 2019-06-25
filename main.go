@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -24,8 +26,14 @@ type Ids []int // Article に Cards を格納する際の中間スライス
 type Cards []Article
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
 	server := http.Server{
-		Addr: "localhost:8089",
+		Addr: ":" + port,
 	}
 	http.HandleFunc("/", process)
 	server.ListenAndServe()
@@ -79,7 +87,7 @@ func process(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. MAKE TEMPLATE
-	t, err := template.ParseFiles("tmpl.html")
+	t, err := template.ParseFiles("./template/tmpl.html")
 	if err != nil {
 		log.Fatal(err)
 	}
