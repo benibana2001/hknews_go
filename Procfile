@@ -1,1 +1,1 @@
-web: ./hknews_go
+web: bin/hknews_go
