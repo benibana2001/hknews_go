@@ -5,4 +5,4 @@ build:
     - go
 
 run:
-  web: hknews_go
+  web: main

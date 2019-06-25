@@ -1,1 +1,1 @@
-web: ./hknews_go
+web: ./main
