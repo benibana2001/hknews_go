@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"log"
