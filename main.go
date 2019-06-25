@@ -87,7 +87,7 @@ func process(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. MAKE TEMPLATE
-	t, err := template.ParseFiles("tmpl.html")
+	t, err := template.ParseFiles("./template/tmpl.html")
 	if err != nil {
 		log.Fatal(err)
 	}
