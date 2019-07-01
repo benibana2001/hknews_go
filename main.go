@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
@@ -29,7 +30,8 @@ func main() {
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		log.Fatal("$PORT must be set")
+		fmt.Println("$PORT must be set, so that set default value")
+		port = "3000"
 	}
 
 	server := http.Server{
